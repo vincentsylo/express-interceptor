@@ -1,0 +1,8 @@
+{
+  "200": {
+    "message": "We've just received a 200!"
+  },
+  "401": {
+    "message": "We've just received a 401! :("
+  }
+}
