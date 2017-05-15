@@ -12,7 +12,8 @@ export default path =>
 
       fetch() {
         this.setState({ fetching: true }, async () => {
-          const data = await axios.get(path);
+          const response = await axios.get(path);
+          const data = response.data;
           this.setState({ data, fetching: false });
         });
       }

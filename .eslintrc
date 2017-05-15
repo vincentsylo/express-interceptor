@@ -4,7 +4,9 @@
     "airbnb"
   ],
   "rules": {
+    "max-len": ["error", 200, 4],
     "react/jsx-filename-extension": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "class-methods-use-this": "off"
   }
 }

@@ -16,9 +16,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Add endpoints
-app.get('/api/example', (req, res) => {
-
-});
+app.get('/api/example', (req, res) => {});
+app.get('/api/example2', (req, res) => {});
+app.post('/api/example2', (req, res) => {});
 
 if (process.env.NODE_ENV !== 'production') {
   interceptor.init(app); // Init after declaring routes

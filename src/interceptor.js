@@ -6,6 +6,7 @@ import path from 'path';
 
 const FOLDER_NAME = 'interceptor';
 const statusCodes = {};
+const methods = {};
 
 function middleware() {
   return (req, res, next) => {
@@ -17,7 +18,7 @@ function middleware() {
           res.json(json[selectedStatusCode]).end();
         })
         .catch(() => {
-          console.error(`No mock found for ${url} - moving next()`);
+          console.error(`No mock found for ${req.url} - moving next()`);
           next();
         });
     } else {
@@ -27,21 +28,23 @@ function middleware() {
 }
 
 function init(app) {
-  const mocks = _(app._router.stack)
-    .filter(item => item.route && item.route.path)
-    .map(item => ({ path: item.route.path, methods: item.route.methods }))
-    .value();
-
-  const newSchema = _.zipObject(
-    _.map(mocks, 'path'),
-    _.map(mocks, mock => _.keys(mock.methods)),
-  );
+  const filtered = _.filter(app._router.stack, item => item.route && item.route.path);
+  const unique = {};
+  _.each(filtered, (item) => {
+    const duplicate = unique[item.route.path] || {};
+    unique[item.route.path] = {
+      methods: [
+        ...(duplicate.methods || []),
+        ..._.keys(item.route.methods),
+      ],
+    };
+  });
 
   mkdirp(FOLDER_NAME, (err) => {
     if (err) {
       console.error(err);
     } else {
-      fs.writeJson(`${FOLDER_NAME}/schema.json`, newSchema);
+      fs.writeJson(`${FOLDER_NAME}/schema.json`, unique);
     }
   });
 
@@ -53,7 +56,22 @@ function init(app) {
   app.get('/interceptor/api/schema', (req, res) => {
     fs.readJson(`${FOLDER_NAME}/schema.json`)
       .then((json) => {
-        res.json(json);
+        const schema = json;
+        _.each(statusCodes, (status, key) => {
+          schema[key] = {
+            ...schema[key],
+            selectedStatus: status,
+          };
+        });
+
+        _.each(methods, (method, key) => {
+          schema[key] = {
+            ...schema[key],
+            selectedMethod: method,
+          };
+        });
+
+        res.json(schema);
       })
       .catch((err) => {
         console.error(err);
@@ -102,14 +120,27 @@ function init(app) {
   });
 
   /**
+   * Update the selected mock HTTP method
+   *
+   * @body path - URL as a key for mapping
+   * @body method - update the selected method in memory
+   */
+  app.post('/interceptor/api/mock/method', (req, res) => {
+    const { urlPath, method } = req.body;
+
+    methods[urlPath] = method;
+
+    res.status(200).end();
+  });
+
+  /**
    * Update the selected mock status code
    *
-   * @query path - URL as a key for mapping
+   * @body path - URL as a key for mapping
    * @body statusCode - update the selected status code in memory
    */
   app.post('/interceptor/api/mock/status', (req, res) => {
-    const urlPath = req.query.path;
-    const { statusCode } = req.body;
+    const { urlPath, statusCode } = req.body;
 
     statusCodes[urlPath] = statusCode;
 

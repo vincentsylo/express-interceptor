@@ -53,6 +53,20 @@ export default {
         ],
         exclude: /node_modules/,
       },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader?modules&localIdentName=[name]__[local]___[hash:5]',
+          'postcss-loader',
+        ],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg|woff|ico)$/,
+        use: [
+          'file-loader?name=[name].[ext]',
+        ],
+      },
     ],
   },
 
