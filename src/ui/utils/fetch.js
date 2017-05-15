@@ -10,18 +10,18 @@ export default path =>
         this.fetch();
       }
 
-      fetch() {
+      fetch = () => {
         this.setState({ fetching: true }, async () => {
           const response = await axios.get(path);
           const data = response.data;
           this.setState({ data, fetching: false });
         });
-      }
+      };
 
       render() {
         const { data } = this.state;
 
-        return <WrappedComponent data={data} />;
+        return <WrappedComponent data={data} refresh={this.fetch} />;
       }
     }
 

@@ -90,7 +90,8 @@ function init(app) {
 
     fs.readJson(`${FOLDER_NAME}${urlPath}.json`)
       .then((json) => {
-        res.json(json);
+        const code = statusCodes[urlPath] || 200;
+        res.json(json[code]);
       })
       .catch((err) => {
         console.error(err);
@@ -102,21 +103,32 @@ function init(app) {
    * Update the selected mock JSON structure
    *
    * @query path - URL as a key for mapping
-   * @body {} - injected into the mock
+   * @body data - injected into the mock
    */
   app.post('/interceptor/api/mock', (req, res) => {
     const urlPath = req.query.path;
-    const body = req.body;
+    const { data } = req.body;
 
-    mkdirp(`${FOLDER_NAME}${urlPath}`, (err) => {
-      if (err) {
-        console.error(err);
-        res.status(404).end();
-      } else {
-        fs.writeJson(`${FOLDER_NAME}${urlPath}.json`, body);
-        res.json(body);
-      }
-    });
+    if (data) {
+      const code = statusCodes[urlPath] || 200;
+      mkdirp(`${FOLDER_NAME}${urlPath.substring(0, _.lastIndexOf(urlPath, '/'))}`, (err) => {
+        if (err) {
+          console.error(err);
+          res.status(404).end();
+        } else {
+          const jsonFile = `${FOLDER_NAME}${urlPath}.json`;
+          fs.readJson(jsonFile).then((json) => {
+            fs.writeJson(jsonFile, {
+              ...json,
+              [code]: JSON.parse(data),
+            });
+            res.json(data);
+          });
+        }
+      });
+    } else {
+      res.status(500).end();
+    }
   });
 
   /**
