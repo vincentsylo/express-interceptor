@@ -11,6 +11,7 @@ class Home extends Component {
     data: PropTypes.shape({
       selectedMethod: PropTypes.string,
       selectedStatus: PropTypes.string,
+      enabled: PropTypes.bool,
     }),
   };
 
@@ -59,7 +60,7 @@ class Home extends Component {
       this.setState({
         responses: {
           ...this.state.responses,
-          [api]: JSON.stringify(json.data),
+          [api]: JSON.stringify(json.data || {}),
         },
       });
     } catch (error) {
@@ -76,6 +77,17 @@ class Home extends Component {
     if (this.state.responses[api]) {
       await axios.post(`/interceptor/api/mock?path=${api}`, { data: this.state.responses[api] });
     }
+  }
+
+  async updateEnabledState(api, enabled) {
+    const { refresh } = this.props;
+
+    await axios.post('/interceptor/api/mock/enable', {
+      urlPath: api,
+      enabled,
+    });
+
+    refresh();
   }
 
   render() {
@@ -100,6 +112,7 @@ class Home extends Component {
                   }
                 </select>
                 <button onClick={() => this.loadJsonResponse(api)}>Edit Response</button>
+                <input type="checkbox" value={apiData.enabled} onChange={event => this.updateEnabledState(api, event.target.checked)} />
               </div>
               {
                 responses[api] ? (

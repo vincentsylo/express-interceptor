@@ -7,10 +7,11 @@ import path from 'path';
 const FOLDER_NAME = 'interceptor';
 const statusCodes = {};
 const methods = {};
+const enabledMocks = {};
 
 function middleware() {
   return (req, res, next) => {
-    if (!_.includes(req.url, FOLDER_NAME)) {
+    if (!_.includes(req.url, FOLDER_NAME) && enabledMocks[req.url]) {
       const url = `${FOLDER_NAME}${req.url}`;
       fs.readJson(`${url}.json`)
         .then((json) => {
@@ -68,6 +69,13 @@ function init(app) {
           schema[key] = {
             ...schema[key],
             selectedMethod: method,
+          };
+        });
+
+        _.each(enabledMocks, (item, key) => {
+          schema[key] = {
+            ...schema[key],
+            enabled: item,
           };
         });
 
@@ -141,7 +149,7 @@ function init(app) {
   /**
    * Update the selected mock HTTP method
    *
-   * @body path - URL as a key for mapping
+   * @body urlPath (string) - URL as a key for the mapping
    * @body method - update the selected method in memory
    */
   app.post('/interceptor/api/mock/method', (req, res) => {
@@ -155,13 +163,27 @@ function init(app) {
   /**
    * Update the selected mock status code
    *
-   * @body path - URL as a key for mapping
+   * @body urlPath (string) - URL as a key for the mapping
    * @body statusCode - update the selected status code in memory
    */
   app.post('/interceptor/api/mock/status', (req, res) => {
     const { urlPath, statusCode } = req.body;
 
     statusCodes[urlPath] = statusCode;
+
+    res.status(200).end();
+  });
+
+  /**
+   * Enable the mock
+   *
+   * @body urlPath (string) - URL as a key for the mapping
+   * @body enabled (bool) - on/off status for mocking
+   */
+  app.post('/interceptor/api/mock/enable', (req, res) => {
+    const { urlPath, enabled } = req.body;
+
+    enabledMocks[urlPath] = enabled;
 
     res.status(200).end();
   });
