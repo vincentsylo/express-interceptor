@@ -8,6 +8,7 @@ const FOLDER_NAME = 'interceptor';
 const statusCodes = {};
 const methods = {};
 const enabledMocks = {};
+const delays = {};
 
 function middleware() {
   return (req, res, next) => {
@@ -16,7 +17,10 @@ function middleware() {
       fs.readJson(`${url}.json`)
         .then((json) => {
           const selectedStatusCode = statusCodes[req.url] || 200;
-          res.status(selectedStatusCode).json(json[selectedStatusCode]).end();
+
+          setTimeout(() => {
+            res.status(selectedStatusCode).json(json[selectedStatusCode]).end();
+          }, delays[req.url]);
         })
         .catch(() => {
           console.error(`No mock found for ${req.url} - moving next()`);
@@ -76,6 +80,13 @@ function init(app) {
           schema[key] = {
             ...schema[key],
             enabled: item,
+          };
+        });
+
+        _.each(delays, (delay, key) => {
+          schema[key] = {
+            ...schema[key],
+            delay,
           };
         });
 
@@ -184,6 +195,20 @@ function init(app) {
     const { urlPath, enabled } = req.body;
 
     enabledMocks[urlPath] = enabled;
+
+    res.status(200).end();
+  });
+
+  /**
+   * Set a delay for the mock
+   *
+   * @body urlPath (string) - URL as a key for the mapping
+   * @body delay - in milliseconds
+   */
+  app.post('/interceptor/api/mock/delay', (req, res) => {
+    const { urlPath, delay } = req.body;
+
+    delays[urlPath] = delay;
 
     res.status(200).end();
   });

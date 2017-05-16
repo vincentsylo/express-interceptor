@@ -12,6 +12,7 @@ class Home extends Component {
       selectedMethod: PropTypes.string,
       selectedStatus: PropTypes.string,
       enabled: PropTypes.bool,
+      delay: PropTypes.string,
     }),
   };
 
@@ -90,6 +91,17 @@ class Home extends Component {
     refresh();
   }
 
+  async updateDelay(api, delay) {
+    const { refresh } = this.props;
+
+    await axios.post('/interceptor/api/mock/delay', {
+      urlPath: api,
+      delay,
+    });
+
+    refresh();
+  }
+
   render() {
     const { data } = this.props;
     const { responses } = this.state;
@@ -112,7 +124,11 @@ class Home extends Component {
                   }
                 </select>
                 <button onClick={() => this.loadJsonResponse(api)}>Edit Response</button>
-                <input type="checkbox" value={apiData.enabled} onChange={event => this.updateEnabledState(api, event.target.checked)} />
+                <label>
+                  Delay
+                  <input type="number" defaultValue={apiData.delay} onBlur={event => this.updateDelay(api, event.target.value)} />
+                </label>
+                <input type="checkbox" defaultChecked={apiData.enabled} onChange={event => this.updateEnabledState(api, event.target.checked)} />
               </div>
               {
                 responses[api] ? (
