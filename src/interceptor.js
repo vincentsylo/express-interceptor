@@ -15,7 +15,7 @@ function middleware() {
       fs.readJson(`${url}.json`)
         .then((json) => {
           const selectedStatusCode = statusCodes[req.url] || 200;
-          res.json(json[selectedStatusCode]).end();
+          res.status(selectedStatusCode).json(json[selectedStatusCode]).end();
         })
         .catch(() => {
           console.error(`No mock found for ${req.url} - moving next()`);
@@ -117,13 +117,20 @@ function init(app) {
           res.status(404).end();
         } else {
           const jsonFile = `${FOLDER_NAME}${urlPath}.json`;
-          fs.readJson(jsonFile).then((json) => {
-            fs.writeJson(jsonFile, {
-              ...json,
-              [code]: JSON.parse(data),
+          fs.readJson(jsonFile)
+            .then((json) => {
+              fs.writeJson(jsonFile, {
+                ...json,
+                [code]: JSON.parse(data),
+              });
+              res.json(data);
+            })
+            .catch(() => {
+              fs.writeJson(jsonFile, {
+                [code]: JSON.parse(data),
+              });
+              res.json(data);
             });
-            res.json(data);
-          });
         }
       });
     } else {
